@@ -19,7 +19,13 @@
  */
 package com.openhtmltopdf.css.sheet;
 
+import java.util.List;
+
 public interface RulesetContainer {
-    public void addContent(Ruleset ruleset);
-    public int getOrigin();
+    void addContent(Ruleset ruleset);
+
+    List<Ruleset> getContents();
+
+    int getOrigin();
+
 }

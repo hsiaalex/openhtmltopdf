@@ -639,45 +639,49 @@ public abstract class NaiveUserAgent implements UserAgentCallback, DocumentListe
      */
     @Override
     public String resolveURI(String baseUri, String uri) {
-      if (uri == null || uri.isEmpty()) {
-        return null;
-      }
+        if (uri == null || uri.isEmpty()) {
+            return null;
+        }
 
-      if (uri.startsWith("data:")) {
-        return uri; //bypass URI "formatting" check for data uri, as we may have whitespace in the base64 encoded data
-      }
+        if (uri.startsWith("data:")) {
+            return uri; //bypass URI "formatting" check for data uri, as we may have whitespace in the base64 encoded data
+        }
 
-      try {
-        URI possiblyRelative = new URI(uri);
+        if (baseUri == null) {
+            // If user hasn't provided base URI, just reject resolving relative URIs.
+            XRLog.log(Level.WARNING, LogMessageId.LogMessageId1Param.LOAD_COULD_NOT_RESOLVE_RELATIVE_URI_BECAUSE_NO_BASE_URI_WAS_PROVIDED, uri);
+            return null;
+        }
+
+        URI possiblyRelative;
+        URI base;
+        try {
+            possiblyRelative = new URI(uri);
+            base = new URI(baseUri);
+        } catch (URISyntaxException e) {
+            XRLog.log(Level.WARNING, LogMessageId.LogMessageId3Param.EXCEPTION_URI_WITH_BASE_URI_INVALID, uri, "", baseUri, e);
+            return null;
+        }
 
         if (possiblyRelative.isAbsolute()) {
-          return possiblyRelative.toString();
+            return possiblyRelative.toString();
+        }
+
+        if (baseUri.startsWith("jar")) {
+            try {
+                // Fix for OpenHTMLtoPDF issue-#125, URI class doesn't resolve jar: scheme urls and so returns only
+                // the relative part on calling base.resolve(relative) so we use the URL class instead which does
+                // understand jar: scheme urls.
+                URL absolute = new URL(base.toURL(), uri);
+                return absolute.toString();
+            } catch (MalformedURLException e) {
+                XRLog.log(Level.WARNING, LogMessageId.LogMessageId3Param.EXCEPTION_URI_WITH_BASE_URI_INVALID, uri, "jar scheme", baseUri, e);
+                return null;
+            }
         } else {
-          if (baseUri == null) {
-            // If user hasn't provided base URI, just reject resolving relative URIs.
-            XRLog.log(Level.WARNING, LogMessageId.LogMessageId1Param.LOAD_COULD_NOT_RESOLVE_RELATIVE_URI_BECAUSE_NO_BASE_URI_WAS_PROVIDED,
-                uri);
-            return null;
-          } else if (baseUri.startsWith("jar")) {
-            // Fix for OpenHTMLtoPDF issue-#125, URI class doesn't resolve jar: scheme urls and so returns only
-            // the relative part on calling base.resolve(relative) so we use the URL class instead which does
-            // understand jar: scheme urls.
-            URL base = new URL(baseUri);
-            URL absolute = new URL(base, uri);
-            return absolute.toString();
-          } else {
-            URI base = new URI(baseUri);
             URI absolute = base.resolve(uri);
             return absolute.toString();
-          }
         }
-      } catch (URISyntaxException e) {
-        XRLog.log(Level.WARNING, LogMessageId.LogMessageId3Param.EXCEPTION_URI_WITH_BASE_URI_INVALID, uri, "", baseUri, e);
-        return null;
-      } catch (MalformedURLException e) {
-        XRLog.log(Level.WARNING, LogMessageId.LogMessageId3Param.EXCEPTION_URI_WITH_BASE_URI_INVALID, uri, "jar scheme", baseUri, e);
-        return null;
-      }
     }
   }
 }

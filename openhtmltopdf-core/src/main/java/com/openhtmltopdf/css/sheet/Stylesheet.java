@@ -97,7 +97,7 @@ public class Stylesheet implements RulesetContainer {
     /**
      * @return a list containing page rules, media rules and rulesets in encounter order.
      */
-    public List<Object> getContents() {
+    public List<Ruleset> getContents() {
         return _contents;
     }
     

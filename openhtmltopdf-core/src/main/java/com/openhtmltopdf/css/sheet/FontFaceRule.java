@@ -24,6 +24,9 @@ import com.openhtmltopdf.css.style.CalculatedStyle;
 import com.openhtmltopdf.css.style.EmptyStyle;
 import com.openhtmltopdf.util.XRRuntimeException;
 
+import java.util.Collections;
+import java.util.List;
+
 public class FontFaceRule implements RulesetContainer {
     private int _origin;
     private Ruleset _ruleset;
@@ -39,6 +42,11 @@ public class FontFaceRule implements RulesetContainer {
             throw new XRRuntimeException("Ruleset can only be set once");
         }
         _ruleset = ruleset;
+    }
+
+    @Override
+    public List<Ruleset> getContents() {
+        return Collections.singletonList(_ruleset);
     }
 
     @Override
